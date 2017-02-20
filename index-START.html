@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Whack A Mole!</title>
+  <link href='https://fonts.googleapis.com/css?family=Amatic+SC:400,700' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Whack-a-mole! <span class="score">0</span></h1>
+  <div class="highest-score">Highest Score:<span class="hi-score">0</span></div>  
+  <div class="levels">
+    <span class="select-level">Select a level:</span>
+      <select name="select">
+        <option value="Level 1" selected  data-time="3000">Level 1</option> 
+        <option value="Level 2" data-time="2500">Level 2</option>
+        <option value="Level 3" data-time="2000">Level 3</option>
+        <option value="Level 4" data-time="1500">Level 4</option>
+      </select>
+    </div>
+  <div class="game">
+    <div class="hole hole1">
+      <div class="mole"></div>
+    </div>
+    <div class="hole hole2">
+      <div class="mole"></div>
+    </div>
+    <div class="hole hole3">
+      <div class="mole"></div>
+    </div>
+    <div class="hole hole4">
+      <div class="mole"></div>
+    </div>
+    <div class="hole hole5">
+      <div class="mole"></div>
+    </div>
+    <div class="hole hole6">
+      <div class="mole"></div>
+    </div>
+  </div>
+  <!-- Audio source
+    Baltic Levity - Thatched Villagers by Kevin MacLeod is licensed under a Creative Commons Attribution license (https://creativecommons.org/licenses/by/4.0/)
+Source: http://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100720
+Artist: http://incompetech.com/-->
+<audio src="Baltic_Levity_Thatched_Villagers.mp3" class="background-music"></audio>
+  <audio src="clap.wav">
+  </audio>
+
+  <button class = "start" onClick="startGame()">Start!</button>
+
+<script>
+  const holes = document.querySelectorAll('.hole');
+  const scoreBoard = document.querySelector('.score');
+  const moles = document.querySelectorAll('.mole');
+  const highScore = document.querySelector('.hi-score');
+  const select = document.querySelector('[name="select"]');
+  const audio = document.querySelector('[src="clap.wav"]');
+  const music = document.querySelector('.background-music');
+
+  let hole;
+  let levelTime;
+  let lastHole;
+  let timeUp;
+  let score = 0;
+  let hiScore = JSON.parse(localStorage.getItem('hiScore')) || 0;
+  
+  function randomTime(min, max) {
+    return Math.round(Math.random() * (max-min) + min);
+  }
+
+  function randomHole(holes) {
+    const idx = Math.floor(Math.random() * holes.length);
+    const hole = holes[idx];
+    if (hole === lastHole) {
+      //console.log('picked the same hole');
+      return randomHole(holes);
+    }
+    lastHole = hole;
+    return hole;
+  }
+
+  function peep(levelTime) {
+    const time = randomTime(200,levelTime);
+    hole = randomHole(holes);
+    hole.classList.add('up');
+
+    setTimeout(() => {
+      hole.classList.remove('up');
+      if (!timeUp) peep(levelTime);
+      if (timeUp) music.pause();
+    },time);
+  }
+
+  function startGame() {
+    scoreBoard.textContent = 0;
+    highScore.textContent = hiScore;
+    music.currentTime = 0;
+    music.play();
+    timeUp = false;
+    score = 0;
+    peep(levelTime);
+    setTimeout(() => { timeUp = true },10000);
+  }
+
+  function handleScore(e) {
+    if (!e.isTrusted) return;
+    score++;
+    audio.play();
+    hole.classList.remove('up');
+    scoreBoard.textContent = score;
+    if (score > hiScore) {
+      hiScore = score;
+      highScore.textContent = hiScore;
+    }
+    localStorage.setItem('hiScore', JSON.stringify(hiScore));
+  }
+
+  function changeTime() {
+    levelTime = parseInt(select.options[select.selectedIndex].dataset.time);
+  }
+
+  window.onload = function() {
+    highScore.textContent = hiScore;
+    levelTime = parseInt(select.options[select.selectedIndex].dataset.time);
+  }
+  moles.forEach(mole => mole.addEventListener('click', handleScore));
+  select.addEventListener('change', changeTime);
+</script>
+</body>
+</html>
